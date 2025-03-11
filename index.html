@@ -3,29 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Rank Portal</title>
+    <title>Student Rank Portal - Olympiads</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        input { padding: 10px; margin: 10px; }
-        button { padding: 10px; cursor: pointer; }
-        .result { margin-top: 20px; font-weight: bold; }
+        /* Global Styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #0F2027, #203A43, #2C5364);
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        /* Glassmorphism Card */
+        .container {
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Logo Container */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: auto;
+        }
+
+        /* Text Styling */
+        h2 {
+            margin: 10px 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+            color: #FFD700; /* Gold */
+        }
+
+        p {
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        /* Input Styling */
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            outline: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        /* Button Styling */
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: #FFD700; /* Gold */
+            color: black;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s ease-in-out;
+        }
+
+        button:hover {
+            background: #ffcc00;
+            transform: scale(1.05);
+        }
+
+        /* Loader Animation */
+        .loader {
+            display: none;
+            font-size: 16px;
+            color: white;
+            font-weight: bold;
+            animation: blink 1s infinite alternate;
+        }
+
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+
+        /* Result Section */
+        .result-container {
+            display: none;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .result-data {
+            font-size: 16px;
+            margin-top: 8px;
+        }
+
+        /* Fade-in Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
-    <h2>Student Rank Portal</h2>
-    <input type="text" id="studentName" placeholder="Enter Student Name">
-    <button onclick="fetchStudentData()">Search</button>
-    <div class="result" id="result"></div>
+
+    <div class="container">
+        <!-- Olympiad Logos -->
+        <div class="logo-container">
+            <img src="imo_logo.png" alt="IMO Logo" class="logo">
+            <img src="sso.jpg" alt="Smart Society Olympiad Logo" class="logo">
+        </div>
+
+        <h2>Student Rank Portal</h2>
+        <p>International Mathematics Olympiad | Smart Society Olympiad</p>
+
+        <input type="text" id="studentName" placeholder="Enter Student Name">
+        <button onclick="fetchStudentData()">Search</button>
+
+        <!-- Loader -->
+        <div class="loader" id="loader">🔍 Searching...</div>
+
+        <!-- Result Display -->
+        <div class="result-container" id="result-container">
+            <div class="result-title">🎖️ Student Rank Details</div>
+            <div class="result-data" id="result"></div>
+        </div>
+    </div>
 
     <script>
-        const sheetID = '13zKFgigsAVMB1qZvzKvufFJdgOgt_NYkyYgutNbh2jQ'; // Google Sheet ID
-        const apiKey = 'AIzaSyCp_H0VHVtKqjGtX2qaoO6B502Y5WQ5PYw';   // Google Sheets API Key
-        const range = 'Sheet1!A:D'; // Update if your sheet name is different
+        const sheetID = '13zKFgigsAVMB1qZvzKvufFJdgOgt_NYkyYgutNbh2jQ'; 
+        const apiKey = 'AIzaSyCp_H0VHVtKqjGtX2qaoO6B502Y5WQ5PYw'; 
+        const range = 'Sheet1!A:E'; 
 
         async function fetchStudentData() {
             const name = document.getElementById('studentName').value.trim();
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('result-container');
+            const resultDiv = document.getElementById('result');
+
+            // Reset previous results
+            resultContainer.style.display = "none";
+            loader.style.display = "block";
+            resultDiv.innerHTML = "";
+
             if (!name) {
-                document.getElementById('result').innerText = 'Please enter a valid name.';
+                loader.style.display = "none";
+                alert("Please enter a valid student name.");
                 return;
             }
 
@@ -37,23 +191,37 @@
                 const rows = data.values;
                 
                 let studentFound = false;
-                for (let i = 1; i < rows.length; i++) { // Skip header row
-                    if (rows[i][1].toLowerCase() === name.toLowerCase()) {
-                        document.getElementById('result').innerHTML = 
-                            `Rank: ${rows[i][0]}<br>Marks: ${rows[i][2]}<br>Contact: ${rows[i][3]}`;
+                for (let i = 1; i < rows.length; i++) { 
+                    if (rows[i][0].toLowerCase() === name.toLowerCase()) {
+                        // Simulate a delay for animation effect
+                        setTimeout(() => {
+                            loader.style.display = "none";
+                            resultDiv.innerHTML = `
+                                🏅 <strong>Rank:</strong> ${rows[i][4]}<br>
+                                🎯 <strong>Marks:</strong> ${rows[i][3]}<br>
+                                🏫 <strong>School:</strong> ${rows[i][2]}
+                            `;
+                            resultContainer.style.display = "block";
+                        }, 1200);
                         studentFound = true;
                         break;
                     }
                 }
                 
                 if (!studentFound) {
-                    document.getElementById('result').innerText = 'Student not found.';
+                    setTimeout(() => {
+                        loader.style.display = "none";
+                        alert("Student not found.");
+                    }, 1200);
                 }
             } catch (error) {
-                document.getElementById('result').innerText = 'Error fetching data.';
+                loader.style.display = "none";
+                alert("Error fetching data. Please try again.");
                 console.error(error);
             }
         }
     </script>
+
 </body>
 </html>
+
